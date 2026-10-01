@@ -1,0 +1,8 @@
+/push-swap
+/checker
+/ai-coach
+/.env
+/coverage.out
+/stress-report.json
+*.prof
+.DS_Store
