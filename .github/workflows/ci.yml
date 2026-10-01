@@ -1,0 +1,43 @@
+name: Audit
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: ${{ matrix.os }} / Go ${{ matrix.go }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            go: '1.25.x'
+          - os: ubuntu-latest
+            go: '1.27.x'
+          - os: macos-latest
+            go: '1.27.x'
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false
+      - name: Formatting and static checks
+        run: make fmt-check vet
+      - name: Unit tests and race detector
+        run: make test race
+      - name: Compiled programs and real HTTP failure cases
+        run: make audit
+      - name: Ten thousand 100-value stress cases
+        run: make stress
+      - name: Fuzz parsers, sorter and model responses
+        if: matrix.os == 'ubuntu-latest' && matrix.go == '1.27.x'
+        env:
+          GOMAXPROCS: '4'
+        run: make fuzz
